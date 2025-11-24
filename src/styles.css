@@ -1,0 +1,105 @@
+/* ===== Global ===== */
+body {
+    font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+    background: #f0f0f0;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+.container {
+    width: 90%;
+    max-width: 1100px;
+    margin: auto;
+    padding: 30px 0;
+}
+
+h1 {
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 40px;
+    color: #444;
+}
+
+/* ===== Grid Layout ===== */
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 40px;
+}
+
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ===== Form ===== */
+label {
+    display: block;
+    font-weight: 600;
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    background: #fafafa;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+input:focus {
+    outline: none;
+    border-color: #888;
+    background: #fff;
+}
+
+/* ===== Buttons ===== */
+button,
+.book-item button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    background: #6c7ae0;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover,
+.book-item button:hover {
+    background: #555dc4;
+}
+
+/* ===== Book List ===== */
+.book-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.book-item:last-child {
+    border-bottom: none;
+}
+
+.book-item strong {
+    font-size: 1.1rem;
+}
+
+.book-item small {
+    color: #777;
+}
+
+/* ===== Stats ===== */
+.stats {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 1.1rem;
+    color: #444;
+}
