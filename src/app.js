@@ -88,3 +88,7 @@ function finish(i) {
         alert('You can only finish the current book!');
     }
 }
+
+if (typeof module !== "undefined" && module.exports) {
+    module.exports = { Book, BookList };
+}
