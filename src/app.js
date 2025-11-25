@@ -43,28 +43,33 @@ class BookList {
     }
 }
 
-const myList = new BookList();
+// -------------------------------------------
+//  DOM SOLO EN EL NAVEGADOR
+// -------------------------------------------
+if (typeof document !== "undefined") {
 
-document.getElementById('addBookBtn').addEventListener('click', addBook);
+    const myList = new BookList();
 
-function addBook() {
-    const title = document.getElementById('title').value;
-    const author = document.getElementById('author').value;
-    const genre = document.getElementById('genre').value;
+    document.getElementById('addBookBtn').addEventListener('click', addBook);
 
-    if (!title || !author || !genre) return alert('Fill all fields');
+    function addBook() {
+        const title = document.getElementById('title').value;
+        const author = document.getElementById('author').value;
+        const genre = document.getElementById('genre').value;
 
-    const book = new Book(title, author, genre);
-    myList.add(book);
-    render();
-}
+        if (!title || !author || !genre) return alert('Fill all fields');
 
-function render() {
-    const list = document.getElementById('list');
-    list.innerHTML = '';
+        const book = new Book(title, author, genre);
+        myList.add(book);
+        render();
+    }
 
-    myList.books.forEach((b, i) => {
-        list.innerHTML += `
+    function render() {
+        const list = document.getElementById('list');
+        list.innerHTML = '';
+
+        myList.books.forEach((b, i) => {
+            list.innerHTML += `
       <div class="book-item">
         <div>
           <strong>${b.title}</strong><br>
@@ -74,21 +79,23 @@ function render() {
           ${b.read ? 'Read on ' + b.readDate.toDateString() : '<button onclick="finish(' + i + ')">Finish</button>'}
         </div>
       </div>`;
-    });
+        });
 
-    const stats = document.getElementById('stats');
-    stats.innerText = `Books Read: ${myList.stats.read} / ${myList.books.length}`;
-}
-
-function finish(i) {
-    if (myList.books[i] === myList.currentBook) {
-        myList.finishCurrentBook();
-        render();
-    } else {
-        alert('You can only finish the current book!');
+        const stats = document.getElementById('stats');
+        stats.innerText = `Books Read: ${myList.stats.read} / ${myList.books.length}`;
     }
+
+    window.finish = function (i) {
+        if (myList.books[i] === myList.currentBook) {
+            myList.finishCurrentBook();
+            render();
+        } else {
+            alert('You can only finish the current book!');
+        }
+    };
 }
 
-if (typeof module !== "undefined" && module.exports) {
-    module.exports = { Book, BookList };
-}
+// -------------------------------------------
+//  EXPORT PARA TEST
+// -------------------------------------------
+module.exports = { Book, BookList };
