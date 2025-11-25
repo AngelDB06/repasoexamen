@@ -69,5 +69,5 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           # VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: npx vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} ./src
+        run: npx vercel deploy --prod  --yes --token=${{ secrets.VERCEL_TOKEN }} ./src
 
