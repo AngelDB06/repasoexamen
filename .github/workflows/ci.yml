@@ -3,12 +3,11 @@ name: CI
 on:
   push:
     branches:
-      "release"
+      - "release"
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -19,7 +18,32 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm install && npm install jest --no-save
+        run: npm install && npm install jest jsdoc --no-save
 
       - name: Run tests
         run: npm test
+
+  docs:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install JSDoc
+        run: npm install jsdoc --no-save
+
+      - name: Generate Documentation
+        run: npm run docs
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          publish_branch: gh-pages
