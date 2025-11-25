@@ -1,6 +1,5 @@
-const { Book, BookList } = require('../src/app'); // Ajusta según cómo exportes las clases
+const { Book, BookList } = require('../src/app');
 
-// Mock para Node.js si usamos fecha
 global.Date = class extends Date {
     constructor() { super(); this.fixed = true; }
     toDateString() { return "Mon Nov 25 2025"; }
