@@ -19,8 +19,7 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm install
-        run: npm install jest --no-save
+        run: npm install && npm install jest --no-save
 
       - name: Run tests
         run: npm test
