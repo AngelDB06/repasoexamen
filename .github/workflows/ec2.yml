@@ -1,4 +1,4 @@
-name: Despliegue a EC2 via SSH
+name: Despliegue a EC2 via SSH/SCP
 
 on:
   workflow_dispatch:
@@ -8,19 +8,27 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      # 1. Obtiene el código del repositorio
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Despliega archivos a EC2 usando SSH
-      - name: Deploy 'src' folder to EC2
-        uses: appleboy/ssh-action@v1.0.1
+      - name: Copy 'src' folder to Nginx Root
+        uses: appleboy/scp-action@v0.1.7 
         with:
-          # Parámetros de conexión usando tus secretos de EC2
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          port: ${{ secrets.EC2_PORT }} 
+          
+          source: "src/" 
+          target: "/usr/share/nginx/html"
+          
+      - name: Reload Nginx Service
+        uses: appleboy/ssh-action@v1.0.1 
+        with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           port: ${{ secrets.EC2_PORT }}
-          source: "src/"
-          target: "/usr/share/nginx/html"
-          
+          script: |
+            echo "Archivos transferidos. Recargando Nginx..."
+            sudo systemctl reload nginx
