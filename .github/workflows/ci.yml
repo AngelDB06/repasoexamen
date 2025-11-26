@@ -1,6 +1,11 @@
 # ...existing code...
 name: CI
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 on:
   push:
     branches:
@@ -79,6 +84,29 @@ jobs:
       pages: write
       id-token: write
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check current Pages site (debug)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "GET /repos/${GITHUB_REPOSITORY}/pages ->"
+          curl -s -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages" || true
+          echo
+          echo "HTTP status code above (404 means no site configured)."
+
+      - name: Try to create Pages site (if not exists)
+        if: ${{ always() }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Ajusta branch/path según tu repo; esta llamada crea el site con 'release' y path 'docs'
+          curl -s -X POST -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
+            -d '{"source":{"branch":"release","path":"docs"}}' \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages" || true
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v3
         with:
