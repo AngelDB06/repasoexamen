@@ -87,7 +87,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check current Pages site (debug)
+      - name: Debug - Check current Pages site status
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -97,20 +97,42 @@ jobs:
           echo
           echo "HTTP status code above (404 means no site configured)."
 
-      - name: Try to create Pages site (if not exists)
-        if: ${{ always() }}
+      - name: Ensure Pages site exists (create if missing)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PAGES_PAT: ${{ secrets.PAGES_PAT }}
         run: |
-          # Ajusta branch/path según tu repo; esta llamada crea el site con 'release' y path 'docs'
-          curl -s -X POST -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
-            -d '{"source":{"branch":"release","path":"docs"}}' \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages" || true
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages" || true)
+          echo "Current Pages status: $STATUS"
+          if [ "$STATUS" = "404" ]; then
+            echo "Pages site not found. Attempting to create using GITHUB_TOKEN..."
+            CREATE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
+              -d '{"source":{"branch":"release","path":"docs"}}' \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages" || true)
+            echo "Create attempt status with GITHUB_TOKEN: $CREATE_STATUS"
+            if [ "$CREATE_STATUS" != "201" ]; then
+              if [ -n "$PAGES_PAT" ]; then
+                echo "Retrying create using PAGES_PAT..."
+                curl -s -X POST -H "Authorization: Bearer $PAGES_PAT" -H "Accept: application/vnd.github+json" \
+                  -d '{"source":{"branch":"release","path":"docs"}}' \
+                  "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages"
+              else
+                echo "No PAGES_PAT provided. Please set secret PAGES_PAT with a PAT that has repo + pages permissions and re-run."
+                exit 1
+              fi
+            fi
+          else
+            echo "Pages site already configured (status $STATUS)."
+          fi
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v3
         with:
           enablement: 'enable'
+
+      - name: Download pages artifact (optional - for troubleshooting)
+        uses: actions/download-pages-artifact@v2
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v1
