@@ -30,4 +30,4 @@ jobs:
       - name: 5.Subir al bucket
         run: |
           echo "Subiendo archivos a S3..."
-          aws s3 sync ./src/ "s3://${{ secrets.S3_BUCKET }}/" --delete
+          aws s3 sync ./src/ "s3://${{ secrets.S3_BUCKET_NAME }}/" --delete
