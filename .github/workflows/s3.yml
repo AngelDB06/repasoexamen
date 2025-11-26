@@ -13,8 +13,9 @@ jobs:
       AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
       AWS_REGION: ${{ secrets.AWS_REGION }}
       S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+      SANITIZED_AWS_SESSION_TOKEN: ''
 
-      steps:
+    steps:
       - name: Validate AWS secrets
         run: |
           if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
@@ -33,20 +34,12 @@ jobs:
           fi
 
       - name: Configure AWS credentials (with session token)
-        if: ${{ env.SANITIZED_AWS_SESSION_TOKEN != '' }}
+        if: ${{ env.AWS_SESSION_TOKEN != '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ env.SANITIZED_AWS_SESSION_TOKEN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Configure AWS credentials (without session token)
-        if: ${{ env.SANITIZED_AWS_SESSION_TOKEN == '' }}
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Configure AWS credentials (without session token)
@@ -66,7 +59,7 @@ jobs:
         with:
           name: static-app-artifact
           path: ./app
-          
+
       - name: Descargar Artefacto de Documentación
         uses: actions/download-artifact@v4
         with:
