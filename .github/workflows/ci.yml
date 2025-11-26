@@ -45,8 +45,7 @@ jobs:
         run: npm run docs
 
       - name: Upload pages artifact
-        # Cambia a la versión más reciente disponible de upload-pages-artifact (si existe v2)
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: docs/
           
