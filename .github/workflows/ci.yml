@@ -25,29 +25,38 @@ jobs:
         run: npm test
 
   docs:
-    name: Generate Documentation
+    name: Generate and Deploy Documentation
     runs-on: ubuntu-latest
-    needs: test 
+    needs: test
+    # Permisos necesarios para desplegar en Pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    # Configuración del entorno de despliegue
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-
       - name: Install JSDoc
         run: npm install jsdoc --no-save
-
       - name: Generate Documentation
         run: npm run docs
-
-      - name: Upload Documentation as Artifact
-        uses: actions/upload-artifact@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: documentation
-          path: docs/
+          path: 'docs/'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
           
   deploy:
     name: Deploy to Vercel
