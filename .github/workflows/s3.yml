@@ -7,13 +7,15 @@ jobs:
   deploy:
     name: Desplegar a S3
     runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
 
     steps:
       - name: Validate AWS secrets
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
         run: |
           if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
             echo "ERROR: AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY is missing. Set them as repository secrets."
@@ -37,21 +39,21 @@ jobs:
           fi
 
       - name: Configure AWS credentials (with session token)
-        if: ${{ secrets.AWS_SESSION_TOKEN != '' }}
+        if: ${{ env.AWS_SESSION_TOKEN != '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ env.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Configure AWS credentials (without session token)
-        if: ${{ secrets.AWS_SESSION_TOKEN == '' }}
+        if: ${{ env.AWS_SESSION_TOKEN == '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Verify AWS credentials (debug)
         run: |
@@ -70,10 +72,10 @@ jobs:
           path: ./docs
 
       - name: Sincronizar App con S3
-        run: aws s3 sync ./app s3://${{ secrets.S3_BUCKET_NAME }} --delete
+        run: aws s3 sync ./app s3://${{ env.S3_BUCKET_NAME }} --delete
 
       - name: Sincronizar Documentación con S3
-        run: aws s3 sync ./docs s3://${{ secrets.S3_BUCKET_NAME }}/docs --delete
+        run: aws s3 sync ./docs s3://${{ env.S3_BUCKET_NAME }}/docs --delete
 
       - name: Despliegue S3 Completo
         run: echo "Sitio S3 desplegado."
