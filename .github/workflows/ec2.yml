@@ -1,3 +1,4 @@
+
 name: Desplegar en EC2
 
 on:
@@ -8,10 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 1. Checkout del código
-        uses: actions/checkout@v4 # Usar v4, ya que v6-beta no está disponible
+        uses: actions/checkout@v4
 
-      # 2. Copiar archivos a una carpeta TEMPORAL en el directorio personal (SCP)
-      # Esto asegura que el usuario SSH (ec2-user) tenga permisos de escritura.
       - name: 2. Copiar contenido de 'src' a carpeta temporal
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -19,13 +18,12 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           port: ${{ secrets.EC2_PORT }}
-          # 🚨 CLAVE: El '/' al final de 'src/' copia el CONTENIDO.
-          source: "./src/" 
-          target: "/home/${{ secrets.EC2_USER }}/tmp_deploy" # Directorio temporal
-          
-      # 3. Mover y Limpiar Archivos (Usando SSH para comandos remotos)
+          source: "./src/."
+          target: "/home/${{ secrets.EC2_USER }}/tmp_deploy"
+
+
       - name: 3. Limpiar, Mover y Recargar Nginx
-        uses: appleboy/ssh-action@v1.0.1 # Versión estable recomendada
+        uses: appleboy/ssh-action@v1.0.1
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -33,14 +31,19 @@ jobs:
           port: ${{ secrets.EC2_PORT }}
           script: |
 
+            sudo mkdir -p /usr/share/nginx/html
+            sudo chmod -R 755 /usr/share/nginx/html
+
+
             sudo rm -rf /usr/share/nginx/html/*
             echo "Directorio de Nginx limpiado."
 
-            sudo cp -r /home/${{ secrets.EC2_USER }}/tmp_deploy/. /usr/share/nginx/html/
+
+            sudo cp -a /home/${{ secrets.EC2_USER }}/tmp_deploy/. /usr/share/nginx/html/
             echo "Contenido de 'src' movido directamente a la raíz de Nginx."
-            
+
             sudo rm -rf /home/${{ secrets.EC2_USER }}/tmp_deploy
-            
+            echo "Carpeta temporal eliminada."
 
             sudo systemctl reload nginx
             echo "Nginx recargado."
