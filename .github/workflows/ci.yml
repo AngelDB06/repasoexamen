@@ -1,3 +1,4 @@
+# ...existing code...
 name: CI
 
 on:
@@ -11,10 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
@@ -30,10 +31,10 @@ jobs:
     needs: test 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
@@ -44,7 +45,8 @@ jobs:
         run: npm run docs
 
       - name: Upload pages artifact
-        uses: actions/upload-pages-artifact@v1
+        # Cambia a la versión más reciente disponible de upload-pages-artifact (si existe v2)
+        uses: actions/upload-pages-artifact@v2
         with:
           path: docs/
           
@@ -54,10 +56,10 @@ jobs:
     needs: test
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
 
