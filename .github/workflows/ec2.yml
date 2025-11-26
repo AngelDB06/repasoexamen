@@ -29,7 +29,7 @@ jobs:
           port: ${{ secrets.EC2_PORT }}
           script: |
             sudo mkdir -p /var/www/my-site
-            sudo cp -r /home/${{ secrets.EC2_USER }}/site/* /usr/share/nginx/html/ 2>/dev/null | true
+            sudo cp -r /usr/share/nginx/html/ 2>/dev/null | true
             # permisos: prueba para Ubuntu/Nginx
             sudo chown -R www-data:www-data /var/www/my-site 2>/dev/null | true
             sudo systemctl restart nginx || true
