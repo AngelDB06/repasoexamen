@@ -12,4 +12,9 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Deploy src folder to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_DEFAULT_REGION: us-east-1
         run: aws s3 cp ./src s3://s3.2dawangeldb.com/ --recursive --acl public-read
