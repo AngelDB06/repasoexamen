@@ -39,7 +39,7 @@ jobs:
             echo "Directorio de Nginx limpiado."
 
 
-            sudo cp -a /home/${{ secrets.EC2_USER }}/tmp_deploy/. /usr/share/nginx/html/
+            sudo cp -a /home/${{ secrets.EC2_USER }}/tmp_deploy/src/. /usr/share/nginx/html/
             echo "Contenido de 'src' movido directamente a la raíz de Nginx."
 
             sudo rm -rf /home/${{ secrets.EC2_USER }}/tmp_deploy
