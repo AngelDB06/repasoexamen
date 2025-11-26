@@ -14,37 +14,39 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
 
-    steps:
+      steps:
       - name: Validate AWS secrets
         run: |
           if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
             echo "ERROR: AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY is missing. Set them as repository secrets."
             exit 1
           fi
-          if [ -n "$AWS_SESSION_TOKEN" ]; then
-            # Detect CR/LF or other newline characters in the token
-            SANITIZED=$(printf "%s" "$AWS_SESSION_TOKEN" | tr -d '\r\n')
-            if [ "${#SANITIZED}" -ne "${#AWS_SESSION_TOKEN}" ]; then
-              echo "ERROR: AWS_SESSION_TOKEN contains newline/CR characters. Recreate the token secret without newlines."
-              exit 1
-            fi
-            # Detect other non-printable characters (optional)
-            if printf "%s" "$AWS_SESSION_TOKEN" | LC_ALL=C grep -q '[^ -~]'; then
-              echo "ERROR: AWS_SESSION_TOKEN contains non-printable characters. Recreate the token secret."
-              exit 1
-            fi
-            echo "AWS_SESSION_TOKEN provided (validated)."
-          else
-            echo "No AWS_SESSION_TOKEN provided; proceeding without session token."
+          echo "AWS keys present."
+
+      - name: Sanitize AWS_SESSION_TOKEN (remove CR/LF and non-printables)
+        if: ${{ env.AWS_SESSION_TOKEN != '' }}
+        run: |
+          SANITIZED=$(printf "%s" "$AWS_SESSION_TOKEN" | tr -d '\r\n' | tr -cd '[:print:]')
+          echo "SANITIZED_AWS_SESSION_TOKEN=$SANITIZED" >> $GITHUB_ENV
+          if [ "$SANITIZED" != "$AWS_SESSION_TOKEN" ]; then
+            echo "WARNING: AWS_SESSION_TOKEN had newlines or non-printable characters; using sanitized value."
           fi
 
       - name: Configure AWS credentials (with session token)
-        if: ${{ env.AWS_SESSION_TOKEN != '' }}
+        if: ${{ env.SANITIZED_AWS_SESSION_TOKEN != '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ env.AWS_SESSION_TOKEN }}
+          aws-session-token: ${{ env.SANITIZED_AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure AWS credentials (without session token)
+        if: ${{ env.SANITIZED_AWS_SESSION_TOKEN == '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Configure AWS credentials (without session token)
