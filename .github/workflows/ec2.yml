@@ -1,9 +1,7 @@
 name: Despliegue a EC2 via SSH
 
 on:
-  push:
-    branches:
-      - main # Despliega automáticamente en cada push a 'main'
+  workflow_dispatch:
 
 jobs:
   deploy:
