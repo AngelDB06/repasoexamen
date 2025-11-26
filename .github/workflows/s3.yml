@@ -1,76 +1,31 @@
-name: Despliegue a S3
-
+name: Subir Proyecto Bucket S3
 on:
   workflow_dispatch:
 
 jobs:
-  deploy:
-    name: Desplegar a S3
+  despliegue-bucket:
     runs-on: ubuntu-latest
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
-      SANITIZED_AWS_SESSION_TOKEN: ''
-
     steps:
-      - name: Validate AWS secrets
+      - name: 1.Checkout del código
+        uses: actions/checkout@v6-beta
+
+      - name: 2.Configurar Node
+        uses: actions/setup-node@v6.0.0
+        with:
+          node-version: '18'
+
+      - name: 3.Instalar dependencias
         run: |
-          if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
-            echo "ERROR: AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY is missing. Set them as repository secrets."
-            exit 1
-          fi
-          echo "AWS keys present."
+          npm install
+      - name: 4.Configurar credenciales de AWS
+        uses: aws-actions/configure-aws-credentials@v5.1.0
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
 
-      - name: Sanitize AWS_SESSION_TOKEN (remove CR/LF and non-printables)
-        if: ${{ env.AWS_SESSION_TOKEN != '' }}
+      - name: 5.Subir al bucket
         run: |
-          SANITIZED=$(printf "%s" "$AWS_SESSION_TOKEN" | tr -d '\r\n' | tr -cd '[:print:]')
-          echo "SANITIZED_AWS_SESSION_TOKEN=$SANITIZED" >> $GITHUB_ENV
-          if [ "$SANITIZED" != "$AWS_SESSION_TOKEN" ]; then
-            echo "WARNING: AWS_SESSION_TOKEN had newlines or non-printable characters; using sanitized value."
-          fi
-
-      - name: Configure AWS credentials (with session token)
-        if: ${{ env.AWS_SESSION_TOKEN != '' }}
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ env.SANITIZED_AWS_SESSION_TOKEN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Configure AWS credentials (without session token)
-        if: ${{ env.AWS_SESSION_TOKEN == '' }}
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Verify AWS credentials (debug)
-        run: |
-          aws sts get-caller-identity || (echo "ERROR: Invalid AWS credentials or insufficient permissions." && exit 1)
-
-      - name: Descargar Artefacto de la App
-        uses: actions/download-artifact@v4
-        with:
-          name: static-app-artifact
-          path: ./app
-
-      - name: Descargar Artefacto de Documentación
-        uses: actions/download-artifact@v4
-        with:
-          name: documentation-artifact
-          path: ./docs
-
-      - name: Sincronizar App con S3
-        run: aws s3 sync ./app s3://${{ env.S3_BUCKET_NAME }} --delete
-
-      - name: Sincronizar Documentación con S3
-        run: aws s3 sync ./docs s3://${{ env.S3_BUCKET_NAME }}/docs --delete
-
-      - name: Despliegue S3 Completo
-        run: echo "Sitio S3 desplegado."
+          echo "Subiendo archivos a S3..."
+          aws s3 sync ./src/ "s3://${{ secrets.S3_BUCKET }}/" --delete
