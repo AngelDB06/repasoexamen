@@ -9,14 +9,53 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Configurar Credenciales de AWS
+      - name: Validate AWS secrets
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+        run: |
+          if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+            echo "ERROR: AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY is missing. Set them as repository secrets."
+            exit 1
+          fi
+          if [ -n "$AWS_SESSION_TOKEN" ]; then
+            # Detect CR/LF or other newline characters in the token
+            SANITIZED=$(printf "%s" "$AWS_SESSION_TOKEN" | tr -d '\r\n')
+            if [ "${#SANITIZED}" -ne "${#AWS_SESSION_TOKEN}" ]; then
+              echo "ERROR: AWS_SESSION_TOKEN contains newline/CR characters. Recreate the token secret without newlines."
+              exit 1
+            fi
+            # Detect other non-printable characters (optional)
+            if printf "%s" "$AWS_SESSION_TOKEN" | LC_ALL=C grep -q '[^ -~]'; then
+              echo "ERROR: AWS_SESSION_TOKEN contains non-printable characters. Recreate the token secret."
+              exit 1
+            fi
+            echo "AWS_SESSION_TOKEN provided (validated)."
+          else
+            echo "No AWS_SESSION_TOKEN provided; proceeding without session token."
+          fi
+
+      - name: Configure AWS credentials (with session token)
+        if: ${{ secrets.AWS_SESSION_TOKEN != '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Configure AWS credentials (without session token)
+        if: ${{ secrets.AWS_SESSION_TOKEN == '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
 
+      - name: Verify AWS credentials (debug)
+        run: |
+          aws sts get-caller-identity || (echo "ERROR: Invalid AWS credentials or insufficient permissions." && exit 1)
 
       - name: Descargar Artefacto de la App
         uses: actions/download-artifact@v4
