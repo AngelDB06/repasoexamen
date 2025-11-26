@@ -45,5 +45,5 @@ jobs:
             sudo rm -rf /home/${{ secrets.EC2_USER }}/tmp_deploy
             echo "Carpeta temporal eliminada."
 
-            sudo systemctl reload nginx
+            sudo systemctl restart nginx
             echo "Nginx recargado."
