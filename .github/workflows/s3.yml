@@ -1,25 +1,40 @@
 name: Despliegue a S3
-on: 
+
+on:
   workflow_dispatch:
+
 jobs:
   deploy:
-    name: Deploy to S3
+    name: Desplegar a S3
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+    steps:
+      - name: Configurar Credenciales de AWS
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
 
-      - name: Sync files to S3
-        run: |
-          aws s3 sync ./build s3://s3.2dawangeldb.com --delete
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: us-east-1     
+
+      - name: Descargar Artefacto de la App
+        uses: actions/download-artifact@v4
+        with:
+          name: static-app-artifact
+          path: ./app
+          
+      - name: Descargar Artefacto de Documentación
+        uses: actions/download-artifact@v4
+        with:
+          name: documentation-artifact
+          path: ./docs
+
+      - name: Sincronizar App con S3
+        run: aws s3 sync ./app s3://${{ secrets.S3_BUCKET_NAME }} --delete
+
+      - name: Sincronizar Documentación con S3
+        run: aws s3 sync ./docs s3://${{ secrets.S3_BUCKET_NAME }}/docs --delete
+
+      - name: Despliegue S3 Completo
+        run: echo "Sitio S3 desplegado."
